@@ -152,10 +152,6 @@ void startup_switchon()
 {
     int vals[8];
 
-    //switch on - still might jitter depending on phase
-    //TODO might think to sync the relay with the ISR
-    relay_on();
-
     //185 - 9900
     for(int i=0;i<18000;i++)
     {
@@ -220,6 +216,9 @@ void sync_alive(){
   if(intCount != 0){
     alive = true;
   }else{
+    if(!alive){//just died
+      set_all_levels(0);
+    }
     alive = false;
   }
   intCount = 0;
@@ -239,27 +238,27 @@ void setup()
 
   start_timer_freq(TIM4,5,sync_alive);
 
-  //startup_switchon();
-
+  //switch on - still might jitter depending on phase
+  //TODO might think to sync the relay with the ISR
   relay_on();
-  delay(1000);
+  delay(300);
+
+  set_all_levels(800);
+  //startup_switchon();//max is too much for default, and should use ramps
 
 }
 
 void loop()
 {
   if(Serial3.available()>0){
-    String msg = Serial3.readString();
+    String msg = Serial3.readString();//default 1000 ms timeout
     String response = process_message(msg);
     Serial3.println(response);
   }
   if(alive){
-    set_all_levels(800);
-    led_on();  delay(500);  led_off();delay(500);
+    led_off();
   }else{
-    set_all_levels(0);
     led_on();  delay(200);  led_off();delay(100);
     led_on();  delay(200);  led_off();delay(500);
   }
-
 }
